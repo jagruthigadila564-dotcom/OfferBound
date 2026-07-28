@@ -1,0 +1,160 @@
+OfferBound Progress Summary
+✅ Phase 1 – Development Environment Setup (Completed)
+Objective
+
+Prepare the development environment required for building the OfferBound project.
+
+Tasks Completed
+1. Installed Java Development Kit (JDK)
+Installed Eclipse Temurin OpenJDK 17
+
+Verified installation using:
+
+java -version
+javac -version
+2. Installed Apache Maven
+Installed Apache Maven 3.9.x
+Configured:
+MAVEN_HOME
+Updated the PATH environment variable
+
+Verified installation using:
+
+mvn -version
+3. Installed MySQL
+Installed MySQL Server
+Installed MySQL Workbench
+Verified database connection.
+4. Installed Development Tools
+VS Code
+Required Java extensions
+Git
+5. Created Project Repository Structure
+OfferBound/
+│
+├── backend/
+├── frontend/
+├── AI/
+├── database/
+├── assets/
+├── docs/
+└── README.md
+
+✅ Phase 2 – Spring Boot Backend Initialization (Completed)
+Objective
+
+Initialize the backend using Spring Boot and connect it to MySQL.
+
+1. Generated Spring Boot Project
+
+Generated the project from Spring Initializr.
+
+Configuration
+Property	Value
+Project	Maven
+Language	Java
+Spring Boot	4.1.0
+Java	17
+Group	com.offerbound
+Artifact	backend
+Packaging	Jar
+2. Added Dependencies
+
+Included:
+
+Spring Web
+Spring Data JPA
+Spring Security
+MySQL Driver
+Lombok
+Validation
+3. Imported Project into VS Code
+Opened the complete OfferBound folder.
+Imported the Maven project.
+Downloaded all required dependencies.
+4. Created MySQL Database
+
+Created:
+
+CREATE DATABASE offerbound;
+
+Verified the database exists.
+
+5. Configured Spring Boot
+
+Updated application.properties with:
+
+Database URL
+Username
+Password
+Hibernate configuration
+JDBC Driver
+Server Port
+6. Connected Spring Boot to MySQL
+
+Successfully connected Spring Boot to MySQL.
+
+Verified:
+
+HikariCP connection
+Hibernate initialization
+MySQL dialect detection
+7. Successfully Started Backend
+
+Backend started successfully.
+
+Verified:
+
+Tomcat running on port 8080
+JPA initialized
+Hibernate connected
+Spring Boot application started
+8. Learned About Spring Security
+
+Observed:
+
+Using generated security password
+
+This is expected because Spring Security is enabled by default.
+
+9. Created First REST Controller
+
+Created:
+
+HomeController.java
+
+Learned about:
+
+@RestController
+@GetMapping
+
+Also corrected the project structure by moving the controller into the proper package:
+
+src/main/java/com/offerbound/backend/controller
+
+instead of placing it directly under the project root.
+
+📁 Current Project Structure
+OfferBound
+│
+├── backend
+│   ├── src
+│   │   ├── main
+│   │   │   ├── java
+│   │   │   │   └── com
+│   │   │   │       └── offerbound
+│   │   │   │           ├── BackendApplication.java
+│   │   │   │           └── controller
+│   │   │   │               └── HomeController.java
+│   │   │   └── resources
+│   │   │       └── application.properties
+│   │   ├── test
+│   │   └── pom.xml
+│   └── target
+│
+├── frontend
+├── AI
+├── database
+├── docs
+├── assets
+└── README.md

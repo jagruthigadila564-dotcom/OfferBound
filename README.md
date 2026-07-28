@@ -1,4 +1,4 @@
-# 🚀 OfferBound
+# OfferBound
 
 ## AI-Powered Resume Analyzer & Personalized Mock Interview Platform
 
@@ -17,7 +17,7 @@ The goal of OfferBound is to help students and job seekers understand their stre
 
 ---
 
-# 🎯 Problem Statement
+# Problem Statement
 
 Many students struggle with:
 
@@ -29,4 +29,4 @@ Many students struggle with:
 OfferBound solves this by providing personalized resume analysis and interview preparation.
 
 ---
-Currently under active development 🚀
+Currently under active development.....

@@ -1,76 +1,68 @@
-package com.offerbound.backend.entity;
+package com.offerbound.backend.service;
 
-import jakarta.persistence.*;
-import java.time.LocalDateTime;
+import com.offerbound.backend.dto.LoginRequest;
+import com.offerbound.backend.dto.RegisterRequest;
+import com.offerbound.backend.entity.User;
+import com.offerbound.backend.repository.UserRepository;
+import com.offerbound.backend.security.JwtService;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
 
-@Entity
-@Table(name = "users")
-public class User {
+@Service
+public class UserService {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
 
-    @Column(nullable = false)
-    private String name;
+    public UserService(UserRepository userRepository,
+                       PasswordEncoder passwordEncoder,
+                       JwtService jwtService) {
 
-    @Column(nullable = false, unique = true)
-    private String email;
-
-    @Column(nullable = false)
-    private String password;
-
-    @Column(name = "created_at")
-    private LocalDateTime createdAt;
-
-    public User() {
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.jwtService = jwtService;
     }
 
-    public User(Long id, String name, String email, String password, LocalDateTime createdAt) {
-        this.id = id;
-        this.name = name;
-        this.email = email;
-        this.password = password;
-        this.createdAt = createdAt;
+    // ==========================
+    // Register User
+    // ==========================
+    public String registerUser(RegisterRequest request) {
+
+        if (userRepository.existsByEmail(request.getEmail())) {
+            return "Email already registered";
+        }
+
+        User user = new User();
+
+        user.setName(request.getName());
+        user.setEmail(request.getEmail());
+
+        user.setPassword(
+                passwordEncoder.encode(request.getPassword())
+        );
+
+        userRepository.save(user);
+
+        return "User Registered Successfully";
     }
 
-    public Long getId() {
-        return id;
-    }
+    // ==========================
+    // Login User
+    // ==========================
+    public String loginUser(LoginRequest request) {
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() ->
+                        new RuntimeException("User not found"));
 
-    public String getName() {
-        return name;
-    }
+        if (!passwordEncoder.matches(
+                request.getPassword(),
+                user.getPassword()
+        )) {
+            throw new RuntimeException("Invalid Password");
+        }
 
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
+        return jwtService.generateToken(user.getEmail());
     }
 }

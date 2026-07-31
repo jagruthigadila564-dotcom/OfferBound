@@ -3,15 +3,13 @@ package com.offerbound.backend.security;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.function.Function;
 
 @Service
@@ -25,22 +23,16 @@ public class JwtService {
 
     // Generate JWT Token
     public String generateToken(String email) {
-        return generateToken(new HashMap<>(), email);
-    }
-
-    // Generate JWT with Extra Claims
-    public String generateToken(Map<String, Object> extraClaims, String email) {
 
         return Jwts.builder()
-                .setClaims(extraClaims)
                 .setSubject(email)
-                .setIssuedAt(new Date(System.currentTimeMillis()))
+                .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + jwtExpiration))
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
 
-    // Extract Username (Email)
+    // Extract Email
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
     }
@@ -50,11 +42,11 @@ public class JwtService {
         return extractClaim(token, Claims::getExpiration);
     }
 
-    // Generic Claim Extractor
-    public <T> T extractClaim(String token, Function<Claims, T> resolver) {
+    // Extract Any Claim
+    public <T> T extractClaim(String token,
+                              Function<Claims, T> resolver) {
 
         final Claims claims = extractAllClaims(token);
-
         return resolver.apply(claims);
     }
 
@@ -63,7 +55,8 @@ public class JwtService {
 
         final String username = extractUsername(token);
 
-        return username.equals(email) && !isTokenExpired(token);
+        return username.equals(email)
+                && !isTokenExpired(token);
     }
 
     // Check Expiration
@@ -72,7 +65,7 @@ public class JwtService {
         return extractExpiration(token).before(new Date());
     }
 
-    // Read All Claims
+    // Parse Claims
     private Claims extractAllClaims(String token) {
 
         return Jwts.parserBuilder()
@@ -85,6 +78,8 @@ public class JwtService {
     // Secret Key
     private Key getSigningKey() {
 
-        return Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
+        byte[] keyBytes = Decoders.BASE64.decode(secretKey);
+
+        return Keys.hmacShaKeyFor(keyBytes);
     }
 }

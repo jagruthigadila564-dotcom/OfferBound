@@ -1,13 +1,14 @@
 package com.offerbound.backend.controller;
 
+import com.offerbound.backend.dto.AuthResponse;
 import com.offerbound.backend.dto.LoginRequest;
 import com.offerbound.backend.dto.RegisterRequest;
 import com.offerbound.backend.service.UserService;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/auth")
+@CrossOrigin("*")
 public class AuthController {
 
     private final UserService userService;
@@ -16,17 +17,23 @@ public class AuthController {
         this.userService = userService;
     }
 
-    // Register API
+    // Register
     @PostMapping("/register")
-    public ResponseEntity<String> register(@RequestBody RegisterRequest request) {
+    public String register(@RequestBody RegisterRequest request) {
 
-        return ResponseEntity.ok(userService.registerUser(request));
+        return userService.registerUser(request);
     }
 
-    // Login API
+    // Login
     @PostMapping("/login")
-    public ResponseEntity<String> login(@RequestBody LoginRequest request) {
+    public AuthResponse login(@RequestBody LoginRequest request) {
 
-        return ResponseEntity.ok(userService.loginUser(request));
+        String token = userService.loginUser(request);
+
+        return new AuthResponse(
+                token,
+                "Login Successful"
+        );
     }
+
 }

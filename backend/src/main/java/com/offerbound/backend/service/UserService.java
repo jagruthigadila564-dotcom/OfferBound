@@ -14,12 +14,15 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
 
     public UserService(UserRepository userRepository,
-                       PasswordEncoder passwordEncoder) {
+                       PasswordEncoder passwordEncoder,
+                       JwtService jwtService) {
 
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.jwtService = jwtService;
     }
 
     // Register User
@@ -64,6 +67,6 @@ public class UserService {
             return "Invalid password";
         }
 
-        return "Login Successful";
+        return jwtService.generateToken(user.getEmail());
     }
 }

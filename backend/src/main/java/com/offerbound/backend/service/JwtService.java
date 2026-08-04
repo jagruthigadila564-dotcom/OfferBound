@@ -1,4 +1,4 @@
-package com.offerbound.backend.security;
+package com.offerbound.backend.service;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -23,14 +23,11 @@ public class JwtService {
     @Value("${jwt.expiration}")
     private long jwtExpiration;
 
-    // Generate JWT Token
     public String generateToken(String email) {
         return generateToken(new HashMap<>(), email);
     }
 
-    // Generate JWT with Extra Claims
     public String generateToken(Map<String, Object> extraClaims, String email) {
-
         return Jwts.builder()
                 .setClaims(extraClaims)
                 .setSubject(email)
@@ -40,41 +37,29 @@ public class JwtService {
                 .compact();
     }
 
-    // Extract Username (Email)
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
     }
 
-    // Extract Expiration
     public Date extractExpiration(String token) {
         return extractClaim(token, Claims::getExpiration);
     }
 
-    // Generic Claim Extractor
     public <T> T extractClaim(String token, Function<Claims, T> resolver) {
-
         final Claims claims = extractAllClaims(token);
-
         return resolver.apply(claims);
     }
 
-    // Validate Token
     public boolean isTokenValid(String token, String email) {
-
         final String username = extractUsername(token);
-
         return username.equals(email) && !isTokenExpired(token);
     }
 
-    // Check Expiration
     private boolean isTokenExpired(String token) {
-
         return extractExpiration(token).before(new Date());
     }
 
-    // Read All Claims
     private Claims extractAllClaims(String token) {
-
         return Jwts.parserBuilder()
                 .setSigningKey(getSigningKey())
                 .build()
@@ -82,9 +67,7 @@ public class JwtService {
                 .getBody();
     }
 
-    // Secret Key
     private Key getSigningKey() {
-
         return Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
     }
 }

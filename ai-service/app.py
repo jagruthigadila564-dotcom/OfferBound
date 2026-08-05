@@ -20,7 +20,9 @@ def home():
 @app.post("/analyze")
 def analyze(request: AnalysisRequest):
 
-    return analyze_resume(
+    result = analyze_resume(
         request.resumeText,
         request.jobDescription
     )
+
+    return result

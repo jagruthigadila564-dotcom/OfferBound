@@ -1,6 +1,8 @@
 package com.offerbound.backend.controller;
 
 import com.offerbound.backend.dto.ResumeResponse;
+import com.offerbound.backend.dto.ResumeTextResponse;
+import com.offerbound.backend.service.ResumeParserService;
 import com.offerbound.backend.service.ResumeService;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
@@ -15,9 +17,14 @@ import java.util.List;
 public class ResumeController {
 
     private final ResumeService resumeService;
+    private final ResumeParserService resumeParserService;
 
-    public ResumeController(ResumeService resumeService) {
+    public ResumeController(
+            ResumeService resumeService,
+            ResumeParserService resumeParserService
+    ) {
         this.resumeService = resumeService;
+        this.resumeParserService = resumeParserService;
     }
 
     // Upload Resume
@@ -28,6 +35,15 @@ public class ResumeController {
     ) throws IOException {
 
         return resumeService.uploadResume(userId, file);
+    }
+
+    // Extract Resume Text
+    @GetMapping("/{resumeId}/extract")
+    public ResumeTextResponse extractResumeText(
+            @PathVariable Long resumeId
+    ) throws IOException {
+
+        return resumeParserService.extractResumeText(resumeId);
     }
 
     // Get All Resumes of a User

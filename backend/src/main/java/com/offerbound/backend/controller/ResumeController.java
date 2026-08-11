@@ -27,41 +27,32 @@ public class ResumeController {
         this.resumeParserService = resumeParserService;
     }
 
-    // Upload Resume
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public String uploadResume(
+    public ResumeResponse uploadResume(
             @RequestParam("userId") Long userId,
             @RequestParam("file") MultipartFile file
     ) throws IOException {
-
         return resumeService.uploadResume(userId, file);
     }
 
-    // Extract Resume Text
     @GetMapping("/{resumeId}/extract")
     public ResumeTextResponse extractResumeText(
             @PathVariable Long resumeId
     ) throws IOException {
-
         return resumeParserService.extractResumeText(resumeId);
     }
 
-    // Get All Resumes of a User
     @GetMapping("/user/{userId}")
     public List<ResumeResponse> getUserResumes(
             @PathVariable Long userId
     ) {
-
         return resumeService.getUserResumes(userId);
     }
 
-    // Delete Resume
     @DeleteMapping("/{resumeId}")
     public String deleteResume(
             @PathVariable Long resumeId
     ) throws IOException {
-
         return resumeService.deleteResume(resumeId);
     }
-
 }

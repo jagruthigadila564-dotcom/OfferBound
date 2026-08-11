@@ -1,7 +1,6 @@
 package com.offerbound.backend.entity;
 
 import jakarta.persistence.*;
-
 import java.time.LocalDateTime;
 
 @Entity
@@ -26,6 +25,15 @@ public class Analysis {
 
     @Column(columnDefinition = "TEXT")
     private String missingSkills;
+
+    @Column(columnDefinition = "TEXT")
+    private String strengths;
+
+    @Column(columnDefinition = "TEXT")
+    private String weaknesses;
+
+    @Column(columnDefinition = "TEXT")
+    private String suggestions;
 
     private LocalDateTime createdAt;
 
@@ -77,7 +85,32 @@ public class Analysis {
         this.missingSkills = missingSkills;
     }
 
+    public String getStrengths() {
+        return strengths;
+    }
+
+    public void setStrengths(String strengths) {
+        this.strengths = strengths;
+    }
+
+    public String getWeaknesses() {
+        return weaknesses;
+    }
+
+    public void setWeaknesses(String weaknesses) {
+        this.weaknesses = weaknesses;
+    }
+
+    public String getSuggestions() {
+        return suggestions;
+    }
+
+    public void setSuggestions(String suggestions) {
+        this.suggestions = suggestions;
+    }
+
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }
 }
+

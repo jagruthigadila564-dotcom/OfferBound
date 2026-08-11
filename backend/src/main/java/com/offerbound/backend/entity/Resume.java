@@ -1,7 +1,6 @@
 package com.offerbound.backend.entity;
 
 import jakarta.persistence.*;
-
 import java.time.LocalDateTime;
 
 @Entity
@@ -12,28 +11,39 @@ public class Resume {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false)
     private String fileName;
 
+    @Column
     private String fileType;
 
+    @Column
     private String filePath;
 
     private LocalDateTime uploadedAt;
 
+    @Lob
+    @Column(columnDefinition = "LONGTEXT")
+    private String resumeText;
+
     @ManyToOne
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
     public Resume() {
-        this.uploadedAt = LocalDateTime.now();
+    }
+
+    public Resume(String fileName, String fileType, String filePath, String resumeText, User user, LocalDateTime uploadedAt) {
+        this.fileName = fileName;
+        this.fileType = fileType;
+        this.filePath = filePath;
+        this.resumeText = resumeText;
+        this.user = user;
+        this.uploadedAt = uploadedAt;
     }
 
     public Long getId() {
         return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
     }
 
     public String getFileName() {
@@ -42,6 +52,14 @@ public class Resume {
 
     public void setFileName(String fileName) {
         this.fileName = fileName;
+    }
+
+    public String getResumeText() {
+        return resumeText;
+    }
+
+    public void setResumeText(String resumeText) {
+        this.resumeText = resumeText;
     }
 
     public String getFileType() {

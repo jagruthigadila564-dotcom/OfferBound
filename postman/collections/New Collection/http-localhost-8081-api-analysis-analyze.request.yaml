@@ -1,0 +1,21 @@
+$kind: http-request
+name: http://localhost:8081/api/analysis/analyze
+description: ""
+url: http://localhost:8081/api/analysis/analyze
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: "{\r
+
+    \    \"resumeId\": 1,\r
+
+    \    \"jobDescription\": \"We are looking for a Java developer with Spring Boot, REST APIs, SQL, Git and problem-solving skills.\"\r
+
+    }"
+auth:
+  type: bearer
+  credentials:
+    token: eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJtb25rZXlAZ21haWwuY29tIiwiaWF0IjoxNzg2NDM5MDUxLCJleHAiOjE3ODY1MjU0NTF9.kE8UpMALLayqSk4vUT2SAfzr8qxrfkWsPeyVSTzd1gk
+order: 3024313313147669

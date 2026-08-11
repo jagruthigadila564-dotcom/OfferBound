@@ -10,6 +10,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.nio.file.*;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -28,46 +29,47 @@ public class ResumeService {
         this.userRepository = userRepository;
     }
 
-    // Upload Resume
-    public String uploadResume(Long userId,
+    // Upload Resume — returns the saved resume (id, fileName, fileType, uploadedAt)
+    public ResumeResponse uploadResume(Long userId,
                                MultipartFile file) throws IOException {
 
-        // Check User
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // Create uploads folder
         Path uploadPath = Paths.get(UPLOAD_DIR);
 
         if (!Files.exists(uploadPath)) {
             Files.createDirectories(uploadPath);
         }
 
-        // Generate unique filename
         String fileName = System.currentTimeMillis()
                 + "_"
                 + file.getOriginalFilename();
 
         Path filePath = uploadPath.resolve(fileName);
 
-        // Save file
         Files.copy(
                 file.getInputStream(),
                 filePath,
                 StandardCopyOption.REPLACE_EXISTING
         );
 
-        // Save Resume in DB
         Resume resume = new Resume();
 
         resume.setFileName(file.getOriginalFilename());
         resume.setFileType(file.getContentType());
         resume.setFilePath(filePath.toString());
         resume.setUser(user);
+        resume.setUploadedAt(LocalDateTime.now());
 
-        resumeRepository.save(resume);
+        Resume saved = resumeRepository.save(resume);
 
-        return "Resume Uploaded Successfully";
+        return new ResumeResponse(
+                saved.getId(),
+                saved.getFileName(),
+                saved.getFileType(),
+                saved.getUploadedAt()
+        );
     }
 
     // Get All Resumes of User
@@ -81,19 +83,12 @@ public class ResumeService {
         List<ResumeResponse> response = new ArrayList<>();
 
         for (Resume resume : resumes) {
-
-            response.add(
-
-                    new ResumeResponse(
-
-                            resume.getId(),
-                            resume.getFileName(),
-                            resume.getFileType(),
-                            resume.getUploadedAt()
-
-                    )
-
-            );
+            response.add(new ResumeResponse(
+                    resume.getId(),
+                    resume.getFileName(),
+                    resume.getFileType(),
+                    resume.getUploadedAt()
+            ));
         }
 
         return response;
@@ -103,8 +98,7 @@ public class ResumeService {
     public String deleteResume(Long resumeId) throws IOException {
 
         Resume resume = resumeRepository.findById(resumeId)
-                .orElseThrow(() ->
-                        new RuntimeException("Resume not found"));
+                .orElseThrow(() -> new RuntimeException("Resume not found"));
 
         Files.deleteIfExists(Paths.get(resume.getFilePath()));
 
@@ -112,5 +106,4 @@ public class ResumeService {
 
         return "Resume Deleted Successfully";
     }
-
 }

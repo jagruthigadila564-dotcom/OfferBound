@@ -1,0 +1,24 @@
+$kind: http-request
+name: http://localhost:8081/api/resume/upload
+description: ""
+url: http://localhost:8081/api/resume/upload
+method: POST
+body:
+  type: formdata
+  content:
+    - type: text
+      key: userId
+      value: "5"
+      description: ""
+      disabled: false
+    - type: file
+      key: file
+      src:
+        - /C:/Users/Gadila.pranathi/Desktop/jag/PROJECTS/RESUMES/jagruthi_resume_sony.pdf
+      description: ""
+      disabled: false
+auth:
+  type: bearer
+  credentials:
+    token: eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJwcmFuYXRoaWlAZ21haWwuY29tIiwiaWF0IjoxNzg2NDQ0MTg0LCJleHAiOjE3ODY1MzA1ODR9.YRA0PyQqL4K9kuIaBMa7rKu7_DOVAL-7ZUhSnzCtxMg
+order: 4431587772357587

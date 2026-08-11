@@ -1,11 +1,11 @@
 package com.offerbound.backend.security;
 
+import com.offerbound.backend.service.CustomUserDetailsService;
 import com.offerbound.backend.service.JwtService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -37,45 +37,50 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     ) throws ServletException, IOException {
 
         final String authHeader = request.getHeader("Authorization");
-        final String jwt;
-        final String email;
 
-        // No Authorization Header
+        // No Authorization header
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
         }
 
         // Extract JWT
-        jwt = authHeader.substring(7);
+        String jwt = authHeader.substring(7);
 
-        // Extract Email
-        email = jwtService.extractUsername(jwt);
+        try {
+            String email = jwtService.extractUsername(jwt);
 
-        // Authenticate User
-        if (email != null &&
-                SecurityContextHolder.getContext().getAuthentication() == null) {
+            // Only authenticate if there is no existing authentication
+            if (email != null &&
+                    SecurityContextHolder.getContext().getAuthentication() == null) {
 
-            UserDetails userDetails =
-                    userDetailsService.loadUserByUsername(email);
+                UserDetails userDetails =
+                        userDetailsService.loadUserByUsername(email);
 
-            if (jwtService.isTokenValid(jwt, userDetails.getUsername())) {
+                if (jwtService.isTokenValid(jwt, userDetails.getUsername())) {
 
-                UsernamePasswordAuthenticationToken authToken =
-                        new UsernamePasswordAuthenticationToken(
-                                userDetails,
-                                null,
-                                userDetails.getAuthorities()
-                        );
+                    UsernamePasswordAuthenticationToken authentication =
+                            new UsernamePasswordAuthenticationToken(
+                                    userDetails,
+                                    null,
+                                    userDetails.getAuthorities()
+                            );
 
-                authToken.setDetails(
-                        new WebAuthenticationDetailsSource()
-                                .buildDetails(request)
-                );
+                    authentication.setDetails(
+                            new WebAuthenticationDetailsSource()
+                                    .buildDetails(request)
+                    );
 
-                SecurityContextHolder.getContext()
-                        .setAuthentication(authToken);
+                    SecurityContextHolder
+                            .getContext()
+                            .setAuthentication(authentication);
+                }
             }
+
+        } catch (Exception e) {
+            // Invalid/expired JWT.
+            // Continue the chain; Spring Security will return 401
+            // for protected endpoints.
         }
 
         filterChain.doFilter(request, response);

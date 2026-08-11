@@ -3,7 +3,10 @@ package com.offerbound.backend.controller;
 import com.offerbound.backend.dto.AuthResponse;
 import com.offerbound.backend.dto.LoginRequest;
 import com.offerbound.backend.dto.RegisterRequest;
+import com.offerbound.backend.entity.User;
+import com.offerbound.backend.service.JwtService;
 import com.offerbound.backend.service.UserService;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -12,28 +15,30 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final UserService userService;
+    private final JwtService jwtService;
 
-    public AuthController(UserService userService) {
+    public AuthController(UserService userService, JwtService jwtService) {
         this.userService = userService;
+        this.jwtService = jwtService;
     }
 
-    // Register
     @PostMapping("/register")
     public String register(@RequestBody RegisterRequest request) {
-
         return userService.registerUser(request);
     }
 
-    // Login
     @PostMapping("/login")
     public AuthResponse login(@RequestBody LoginRequest request) {
 
-        String token = userService.loginUser(request);
+        User user = userService.authenticateAndGetUser(request);
+        String token = jwtService.generateToken(user.getEmail());
 
-        return new AuthResponse(
-                token,
-                "Login Successful"
-        );
+        return new AuthResponse(token, "Login Successful", user.getId());
     }
 
+    // Turns "User not found" / "Invalid password" into a real 401 instead of a 500
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<AuthResponse> handleAuthError(RuntimeException ex) {
+        return ResponseEntity.status(401).body(new AuthResponse(null, ex.getMessage(), null));
+    }
 }

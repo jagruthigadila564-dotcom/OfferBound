@@ -1,38 +1,38 @@
 import os
 import json
+from google import genai
 
-import google.generativeai as genai
-from dotenv import load_dotenv
-
-from prompt import SYSTEM_PROMPT
-
-load_dotenv()
-
-genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-
-model = genai.GenerativeModel("gemini-1.5-flash")
+from prompt import create_resume_analysis_prompt
 
 
-def analyze_resume(resume_text, job_description):
+class GeminiService:
 
-    prompt = f"""
-{SYSTEM_PROMPT}
+    def __init__(self):
+        api_key = os.getenv("GEMINI_API_KEY")
 
-Resume:
+        if not api_key:
+            raise ValueError("GEMINI_API_KEY is not set")
 
-{resume_text}
+        self.client = genai.Client(api_key=api_key)
 
+    def analyze_resume(self, resume_text: str, job_description: str):
 
-Job Description:
+        prompt = create_resume_analysis_prompt(
+            resume_text,
+            job_description
+        )
 
-{job_description}
-"""
+        response = self.client.models.generate_content(
+            model="gemini-3.6-flash",
+            contents=prompt
+        )
 
-    response = model.generate_content(prompt)
+        result = response.text.strip()
 
-    text = response.text.strip()
+        # Remove markdown code fences if Gemini adds them
+        if result.startswith("```"):
+            result = result.replace("```json", "")
+            result = result.replace("```", "")
+            result = result.strip()
 
-    if text.startswith("```json"):
-        text = text.replace("```json", "").replace("```", "").strip()
-
-    return json.loads(text)
+        return json.loads(result)

@@ -1,28 +1,34 @@
+from dotenv import load_dotenv
+
+load_dotenv()
+
 from fastapi import FastAPI
 from pydantic import BaseModel
-from gemini_service import analyze_resume
+from gemini_service import GeminiService
+
 
 app = FastAPI(title="OfferBound AI Service")
 
+gemini_service = GeminiService()
+
 
 class AnalysisRequest(BaseModel):
-    resumeText: str
-    jobDescription: str
+    resume_text: str
+    job_description: str
 
 
 @app.get("/")
 def home():
     return {
-        "message": "OfferBound AI Service Running"
+        "message": "OfferBound AI Service is running"
     }
 
 
 @app.post("/analyze")
-def analyze(request: AnalysisRequest):
-
-    result = analyze_resume(
-        request.resumeText,
-        request.jobDescription
+def analyze_resume(request: AnalysisRequest):
+    result = gemini_service.analyze_resume(
+        request.resume_text,
+        request.job_description
     )
 
     return result

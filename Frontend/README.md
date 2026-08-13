@@ -1,10 +1,4 @@
-# OfferBound — Frontend
 
-Standalone React + TypeScript + Vite frontend for OfferBound. Extracted from
-the original Replit project, cleaned of all backend, database, and
-Replit-specific tooling. This is UI-only — all "AI analysis", login,
-registration, and interview feedback flows use mock/simulated data and are
-ready to be wired up to a real backend.
 
 ## Stack
 
@@ -56,10 +50,3 @@ src/
 └── index.css         # Design system (colors, typography, etc.)
 ```
 
-## Connecting a backend
-
-This project intentionally contains **no backend, API client, or database
-code**. Pages currently simulate network calls with `setTimeout`/mock data
-(e.g. in `Dashboard.tsx`, `Login.tsx`, `Interview.tsx`). Replace those mock
-sections with real API calls when you're ready to connect your backend —
-the UI and navigation flow will keep working unchanged in the meantime.

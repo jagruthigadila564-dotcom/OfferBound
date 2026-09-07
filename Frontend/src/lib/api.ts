@@ -1,5 +1,3 @@
-// Frontend/src/lib/api.ts
-
 const API_BASE =
   import.meta.env.VITE_API_URL ||
   'http://localhost:8081/api';
@@ -16,7 +14,6 @@ async function request<T>(
 ): Promise<T> {
 
   const token = getToken();
-
 
   const res = await fetch(
     `${API_BASE}${path}`,
@@ -45,13 +42,11 @@ async function request<T>(
     }
   );
 
-
   if (!res.ok) {
 
     const text =
-      await res.text().catch(
-        () => ''
-      );
+      await res.text()
+        .catch(() => '');
 
     throw new Error(
       text ||
@@ -59,12 +54,8 @@ async function request<T>(
     );
   }
 
-
   const contentType =
-    res.headers.get(
-      'content-type'
-    );
-
+    res.headers.get('content-type');
 
   return (
     contentType?.includes(
@@ -76,8 +67,14 @@ async function request<T>(
 }
 
 
+// =========================================================
+// TYPES
+// =========================================================
+
 export interface InterviewQA {
+
   question: string;
+
   answer: string;
 }
 
@@ -153,7 +150,15 @@ export interface TailoredResume {
 }
 
 
+// =========================================================
+// API
+// =========================================================
+
 export const api = {
+
+  // -------------------------------------------------------
+  // AUTH
+  // -------------------------------------------------------
 
   register: (
     data: {
@@ -190,6 +195,10 @@ export const api = {
     ),
 
 
+  // -------------------------------------------------------
+  // RESUME
+  // -------------------------------------------------------
+
   uploadResume: (
     userId: number,
     file: File
@@ -207,7 +216,6 @@ export const api = {
       'file',
       file
     );
-
 
     return request<{
       id: number;
@@ -259,6 +267,10 @@ export const api = {
     ),
 
 
+  // -------------------------------------------------------
+  // ANALYSIS
+  // -------------------------------------------------------
+
   analyzeResume: (
     resumeId: number,
     jobDescription: string
@@ -284,24 +296,6 @@ export const api = {
     ),
 
 
-  tailorResume: (
-    resumeId: number,
-    jobDescription: string
-  ) =>
-    request<TailoredResume>(
-      '/resume/tailor',
-      {
-        method: 'POST',
-
-        body: JSON.stringify({
-          resumeId: resumeId,
-          jobDescription:
-            jobDescription,
-        }),
-      }
-    ),
-
-
   getAnalysisHistory: (
     resumeId: number
   ) =>
@@ -313,6 +307,34 @@ export const api = {
       `/analysis/history/${resumeId}`
     ),
 
+
+  // -------------------------------------------------------
+  // TAILORED RESUME
+  // -------------------------------------------------------
+
+  tailorResume: (
+    resumeId: number,
+    jobDescription: string
+  ) =>
+    request<TailoredResume>(
+      '/resume/tailor',
+      {
+        method: 'POST',
+
+        body: JSON.stringify({
+          resumeId:
+            resumeId,
+
+          jobDescription:
+            jobDescription,
+        }),
+      }
+    ),
+
+
+  // -------------------------------------------------------
+  // MOCK INTERVIEW
+  // -------------------------------------------------------
 
   startInterview: (
     resumeId: number,
@@ -326,7 +348,9 @@ export const api = {
         method: 'POST',
 
         body: JSON.stringify({
-          resumeId: resumeId,
+          resumeId:
+            resumeId,
+
           jobDescription:
             jobDescription,
         }),
@@ -345,10 +369,14 @@ export const api = {
         method: 'POST',
 
         body: JSON.stringify({
-          resumeId: resumeId,
+          resumeId:
+            resumeId,
+
           jobDescription:
             jobDescription,
-          transcript: transcript,
+
+          transcript:
+            transcript,
         }),
       }
     ),

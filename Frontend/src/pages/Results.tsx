@@ -1,4 +1,3 @@
-// Results.tsx
 import { useEffect, useState } from 'react';
 import { useLocation } from 'wouter';
 import { motion } from 'framer-motion';
@@ -10,6 +9,7 @@ import {
   TrendingUp,
   Loader2,
   FileText,
+  Mic,
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -61,6 +61,11 @@ export default function Results() {
     }
 
   }, [setLocation]);
+
+
+  // =========================================================
+  // TAILOR RESUME
+  // =========================================================
 
   const handleTailorResume = async () => {
 
@@ -160,6 +165,62 @@ export default function Results() {
     }
   };
 
+
+  // =========================================================
+  // MOCK INTERVIEW
+  // =========================================================
+
+  const handleMockInterview = () => {
+
+    const token =
+      localStorage.getItem('token');
+
+    const resumeId =
+      sessionStorage.getItem('lastResumeId');
+
+    const jobDescription =
+      sessionStorage.getItem(
+        'lastJobDescription'
+      );
+
+    if (!token) {
+
+      alert(
+        'Your login session has expired. Please login again.'
+      );
+
+      setLocation('/login');
+      return;
+    }
+
+    if (!resumeId) {
+
+      alert(
+        'Resume ID is missing. Please analyze your resume again.'
+      );
+
+      setLocation('/dashboard');
+      return;
+    }
+
+    if (!jobDescription) {
+
+      alert(
+        'Job description is missing. Please analyze your resume again.'
+      );
+
+      setLocation('/dashboard');
+      return;
+    }
+
+    setLocation('/interview');
+  };
+
+
+  // =========================================================
+  // LOADING
+  // =========================================================
+
   if (!analysis) {
 
     return (
@@ -173,10 +234,18 @@ export default function Results() {
     );
   }
 
+
+  // =========================================================
+  // PAGE
+  // =========================================================
+
   return (
     <div className="min-h-[100dvh] bg-gradient-to-br from-background via-primary/5 to-accent/5">
 
       <div className="max-w-6xl mx-auto px-6 py-10">
+
+
+        {/* BACK BUTTON */}
 
         <Button
           variant="ghost"
@@ -191,6 +260,9 @@ export default function Results() {
           Back to Dashboard
 
         </Button>
+
+
+        {/* HEADER */}
 
         <motion.div
           initial={{
@@ -213,6 +285,9 @@ export default function Results() {
           </p>
 
         </motion.div>
+
+
+        {/* ATS SCORE */}
 
         <motion.div
           initial={{
@@ -247,7 +322,13 @@ export default function Results() {
 
         </motion.div>
 
+
+        {/* MATCHED + MISSING SKILLS */}
+
         <div className="grid md:grid-cols-2 gap-6 mb-8">
+
+
+          {/* MATCHED */}
 
           <motion.div
             initial={{
@@ -302,6 +383,9 @@ export default function Results() {
             </div>
 
           </motion.div>
+
+
+          {/* MISSING */}
 
           <motion.div
             initial={{
@@ -359,7 +443,13 @@ export default function Results() {
 
         </div>
 
+
+        {/* STRENGTHS + WEAKNESSES */}
+
         <div className="grid md:grid-cols-2 gap-6 mb-8">
+
+
+          {/* STRENGTHS */}
 
           <motion.div
             initial={{
@@ -410,6 +500,9 @@ export default function Results() {
             </ul>
 
           </motion.div>
+
+
+          {/* WEAKNESSES */}
 
           <motion.div
             initial={{
@@ -463,6 +556,9 @@ export default function Results() {
 
         </div>
 
+
+        {/* SUGGESTIONS */}
+
         <motion.div
           initial={{
             opacity: 0,
@@ -515,6 +611,11 @@ export default function Results() {
 
         </motion.div>
 
+
+        {/* ===================================================
+            ACTION BUTTONS
+        =================================================== */}
+
         <motion.div
           initial={{
             opacity: 0,
@@ -527,8 +628,11 @@ export default function Results() {
           transition={{
             delay: 0.7
           }}
-          className="text-center"
+          className="flex flex-col sm:flex-row items-center justify-center gap-4"
         >
+
+
+          {/* TAILOR RESUME */}
 
           <Button
             size="lg"
@@ -566,11 +670,29 @@ export default function Results() {
 
           </Button>
 
-          <p className="text-sm text-muted-foreground mt-3">
-            AI will optimize your resume using only information already present in it.
-          </p>
+
+          {/* MOCK INTERVIEW */}
+
+          <Button
+            size="lg"
+            onClick={handleMockInterview}
+            className="h-14 px-8 text-lg glow-accent"
+          >
+
+            <Mic
+              className="mr-2 h-5 w-5"
+            />
+
+            Personalized Mock Interview
+
+          </Button>
 
         </motion.div>
+
+
+        <p className="text-sm text-muted-foreground mt-4 text-center">
+          Tailor your resume or practice a personalized interview based on your uploaded resume and this job description.
+        </p>
 
       </div>
 

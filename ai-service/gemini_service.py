@@ -1,5 +1,3 @@
-# ai-service/gemini_service.py
-
 import os
 import json
 import time
@@ -8,14 +6,15 @@ from google import genai
 
 from prompt import (
     create_resume_analysis_prompt,
-    create_tailored_resume_prompt
+    create_tailored_resume_prompt,
+    create_interview_questions_prompt,
+    create_interview_feedback_prompt
 )
 
 
 class GeminiService:
 
     def __init__(self):
-
         api_key = os.getenv("GEMINI_API_KEY")
 
         if not api_key:
@@ -25,7 +24,6 @@ class GeminiService:
 
         self.primary_model = "gemini-3.6-flash"
         self.fallback_model = "gemini-3.5-flash"
-
 
     def _generate(self, prompt: str):
 
@@ -60,8 +58,17 @@ class GeminiService:
                     result = response.text.strip()
 
                     if result.startswith("```"):
-                        result = result.replace("```json", "")
-                        result = result.replace("```", "")
+
+                        result = result.replace(
+                            "```json",
+                            ""
+                        )
+
+                        result = result.replace(
+                            "```",
+                            ""
+                        )
+
                         result = result.strip()
 
                     return json.loads(result)
@@ -90,10 +97,8 @@ class GeminiService:
             )
 
         raise RuntimeError(
-            "Gemini service failed after retries: "
-            + str(last_error)
+            f"Gemini service failed after retries: {last_error}"
         )
-
 
     def analyze_resume(
         self,
@@ -108,7 +113,6 @@ class GeminiService:
 
         return self._generate(prompt)
 
-
     def tailor_resume(
         self,
         resume_text: str,
@@ -118,6 +122,36 @@ class GeminiService:
         prompt = create_tailored_resume_prompt(
             resume_text,
             job_description
+        )
+
+        return self._generate(prompt)
+
+    def generate_interview_questions(
+        self,
+        resume_text: str,
+        job_description: str,
+        num_questions: int = 5
+    ):
+
+        prompt = create_interview_questions_prompt(
+            resume_text,
+            job_description,
+            num_questions
+        )
+
+        return self._generate(prompt)
+
+    def generate_interview_feedback(
+        self,
+        resume_text: str,
+        job_description: str,
+        transcript: list
+    ):
+
+        prompt = create_interview_feedback_prompt(
+            resume_text,
+            job_description,
+            transcript
         )
 
         return self._generate(prompt)

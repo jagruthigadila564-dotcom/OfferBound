@@ -10,4 +10,6 @@ public interface AnalysisRepository extends JpaRepository<Analysis, Long> {
 
     List<Analysis> findByResume(Resume resume);
 
+    List<Analysis> findByResumeId(Long resumeId);
+
 }

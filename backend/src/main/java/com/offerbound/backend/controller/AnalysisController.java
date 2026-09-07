@@ -1,10 +1,10 @@
 package com.offerbound.backend.controller;
 
 import com.offerbound.backend.dto.AnalysisHistoryResponse;
-import com.offerbound.backend.dto.AnalysisRequest;
 import com.offerbound.backend.dto.AnalysisResponse;
 import com.offerbound.backend.service.AnalysisService;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.List;
@@ -24,11 +24,14 @@ public class AnalysisController {
 
     @PostMapping
     public AnalysisResponse analyzeResume(
-            @RequestBody AnalysisRequest request
+            @RequestParam("resume") MultipartFile resume,
+            @RequestParam("jobDescription") String jobDescription
     ) throws IOException {
 
-        return analysisService.analyzeResume(request);
-
+        return analysisService.analyzeResume(
+                resume,
+                jobDescription
+        );
     }
 
     @GetMapping("/history/{resumeId}")
@@ -37,7 +40,5 @@ public class AnalysisController {
     ) {
 
         return analysisService.getAnalysisHistory(resumeId);
-
     }
-
 }

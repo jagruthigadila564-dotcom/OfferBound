@@ -6,12 +6,17 @@ import com.offerbound.backend.entity.Analysis;
 import com.offerbound.backend.entity.Resume;
 import com.offerbound.backend.repository.AnalysisRepository;
 import com.offerbound.backend.repository.ResumeRepository;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 @Service
 public class AIAnalysisService {
@@ -20,6 +25,7 @@ public class AIAnalysisService {
     private final AnalysisRepository analysisRepository;
     private final ResumeRepository resumeRepository;
     private final PDFTextExtractorService pdfTextExtractorService;
+    private final ATSService atsService;
 
     @Value("${ai.service.url:http://127.0.0.1:8000}")
     private String aiServiceUrl;
@@ -28,12 +34,16 @@ public class AIAnalysisService {
             RestTemplate restTemplate,
             AnalysisRepository analysisRepository,
             ResumeRepository resumeRepository,
-            PDFTextExtractorService pdfTextExtractorService
+            PDFTextExtractorService pdfTextExtractorService,
+            ATSService atsService
     ) {
+
         this.restTemplate = restTemplate;
         this.analysisRepository = analysisRepository;
         this.resumeRepository = resumeRepository;
-        this.pdfTextExtractorService = pdfTextExtractorService;
+        this.pdfTextExtractorService =
+                pdfTextExtractorService;
+        this.atsService = atsService;
     }
 
     public AIAnalysisResponse analyzeResume(
@@ -41,43 +51,81 @@ public class AIAnalysisService {
             String jobDescription
     ) {
 
-        // 1. Find the resume in MySQL
-        Resume resume = resumeRepository.findById(resumeId)
-                .orElseThrow(() ->
-                        new RuntimeException(
-                                "Resume not found with id: " + resumeId
-                        )
-                );
+        if (resumeId == null) {
+            throw new IllegalArgumentException(
+                    "Resume ID cannot be null"
+            );
+        }
 
-        // 2. Get the uploaded resume file path
-        String filePath = resume.getFilePath();
+        if (jobDescription == null ||
+                jobDescription.isBlank()) {
 
-        if (filePath == null || filePath.isBlank()) {
+            throw new IllegalArgumentException(
+                    "Job description cannot be empty"
+            );
+        }
+
+        // ==========================================
+        // 1. FIND RESUME
+        // ==========================================
+
+        Resume resume =
+                resumeRepository.findById(resumeId)
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Resume not found with id: "
+                                                + resumeId
+                                )
+                        );
+
+        // ==========================================
+        // 2. GET PDF PATH
+        // ==========================================
+
+        String filePath =
+                resume.getFilePath();
+
+        if (filePath == null ||
+                filePath.isBlank()) {
+
             throw new RuntimeException(
                     "Resume file path is missing"
             );
         }
 
-        // 3. Extract text from the uploaded PDF
+        // ==========================================
+        // 3. EXTRACT RESUME TEXT
+        // ==========================================
+
         String resumeText;
 
         try {
-            resumeText = pdfTextExtractorService.extractText(filePath);
+
+            resumeText =
+                    pdfTextExtractorService
+                            .extractText(filePath);
+
         } catch (Exception e) {
+
             throw new RuntimeException(
-                    "Failed to extract text from resume: " + e.getMessage(),
+                    "Failed to extract text from resume: "
+                            + e.getMessage(),
                     e
             );
         }
 
-        // 4. Make sure text was extracted
-        if (resumeText == null || resumeText.isBlank()) {
+        if (resumeText == null ||
+                resumeText.isBlank()) {
+
             throw new RuntimeException(
-                    "Could not extract any text from the resume"
+                    "Could not extract any text from resume"
             );
         }
 
-        // 5. Create request for FastAPI
+        // ==========================================
+        // 4. SEND TEXT TO AI SERVICE
+        // ==========================================
+
         AIAnalysisRequest request =
                 new AIAnalysisRequest(
                         null,
@@ -85,15 +133,21 @@ public class AIAnalysisService {
                         jobDescription
                 );
 
-        // 6. Set JSON headers
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpHeaders headers =
+                new HttpHeaders();
+
+        headers.setContentType(
+                MediaType.APPLICATION_JSON
+        );
 
         HttpEntity<AIAnalysisRequest> entity =
-                new HttpEntity<>(request, headers);
+                new HttpEntity<>(
+                        request,
+                        headers
+                );
 
-        // 7. Call FastAPI
-        String url = aiServiceUrl + "/analyze";
+        String url =
+                aiServiceUrl + "/analyze";
 
         AIAnalysisResponse response =
                 restTemplate.postForObject(
@@ -102,55 +156,149 @@ public class AIAnalysisService {
                         AIAnalysisResponse.class
                 );
 
-        // 8. Make sure FastAPI returned a response
         if (response == null) {
+
             throw new RuntimeException(
                     "AI service returned an empty response"
             );
         }
 
-        // 9. Create Analysis entity
-        Analysis analysis = new Analysis();
+        /*
+         * IMPORTANT:
+         *
+         * Gemini is NOT trusted to calculate:
+         *
+         * - ATS score
+         * - matched skills
+         * - missing skills
+         *
+         * Those values are calculated below.
+         */
+
+        List<String> resumeSkills =
+                response.getResume_skills() != null
+                        ? response.getResume_skills()
+                        : new ArrayList<>();
+
+        List<String> jobSkills =
+                response.getJob_skills() != null
+                        ? response.getJob_skills()
+                        : new ArrayList<>();
+
+        // ==========================================
+        // 5. DETERMINISTIC COMPARISON
+        // ==========================================
+
+        List<String> matchedSkills =
+                atsService.findMatchedSkills(
+                        resumeSkills,
+                        jobSkills
+                );
+
+        List<String> missingSkills =
+                atsService.findMissingSkills(
+                        resumeSkills,
+                        jobSkills
+                );
+
+        int atsScore =
+                atsService.calculateScore(
+                        resumeSkills,
+                        jobSkills
+                );
+
+        // ==========================================
+        // 6. SET FINAL ATS RESULT
+        // ==========================================
+
+        response.setAts_score(atsScore);
+
+        response.setMatched_skills(
+                matchedSkills
+        );
+
+        response.setMissing_skills(
+                missingSkills
+        );
+
+        // ==========================================
+        // 7. SAVE TO DATABASE
+        // ==========================================
+
+        Analysis analysis =
+                new Analysis();
 
         analysis.setResume(resume);
-        analysis.setJobDescription(jobDescription);
-        analysis.setAtsScore(response.getAts_score());
 
-        // Convert List<String> to String for MySQL TEXT columns
+        analysis.setJobDescription(
+                jobDescription
+        );
+
+        analysis.setAtsScore(
+                atsScore
+        );
+
         analysis.setMatchedSkills(
-                response.getMatched_skills() != null
-                        ? String.join(", ", response.getMatched_skills())
-                        : ""
+                String.join(
+                        ", ",
+                        matchedSkills
+                )
         );
 
         analysis.setMissingSkills(
-                response.getMissing_skills() != null
-                        ? String.join(", ", response.getMissing_skills())
-                        : ""
+                String.join(
+                        ", ",
+                        missingSkills
+                )
         );
 
         analysis.setStrengths(
                 response.getStrengths() != null
-                        ? String.join(", ", response.getStrengths())
+                        ? String.join(
+                                ", ",
+                                response.getStrengths()
+                        )
                         : ""
         );
 
         analysis.setWeaknesses(
                 response.getWeaknesses() != null
-                        ? String.join(", ", response.getWeaknesses())
+                        ? String.join(
+                                ", ",
+                                response.getWeaknesses()
+                        )
                         : ""
         );
 
         analysis.setSuggestions(
                 response.getSuggestions() != null
-                        ? String.join(", ", response.getSuggestions())
+                        ? String.join(
+                                ", ",
+                                response.getSuggestions()
+                        )
                         : ""
         );
 
-        // 10. Save analysis to MySQL
-        analysisRepository.save(analysis);
+        analysisRepository.save(
+                analysis
+        );
 
-        // 11. Return AI response
+        // ==========================================
+        // 8. REMOVE INTERNAL EXTRACTION DATA
+        // ==========================================
+
+        response.setResume_skills(
+                Collections.emptyList()
+        );
+
+        response.setJob_skills(
+                Collections.emptyList()
+        );
+
+        // ==========================================
+        // 9. RETURN FINAL RESULT
+        // ==========================================
+
         return response;
     }
 }

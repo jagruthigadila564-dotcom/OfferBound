@@ -1,97 +1,69 @@
 package com.offerbound.backend.service;
 
-import com.offerbound.backend.dto.AIAnalysisResponse;
 import com.offerbound.backend.dto.AnalysisHistoryResponse;
-import com.offerbound.backend.dto.AnalysisRequest;
 import com.offerbound.backend.dto.AnalysisResponse;
-import com.offerbound.backend.dto.ResumeTextResponse;
 import com.offerbound.backend.entity.Analysis;
 import com.offerbound.backend.entity.Resume;
 import com.offerbound.backend.repository.AnalysisRepository;
 import com.offerbound.backend.repository.ResumeRepository;
-import com.offerbound.backend.utils.ATSCalculator;
-import com.offerbound.backend.utils.SkillExtractor;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class AnalysisService {
 
-    private final ResumeParserService resumeParserService;
-    private final SkillExtractor skillExtractor;
-    private final ATSCalculator atsCalculator;
-    private final AnalysisRepository analysisRepository;
     private final ResumeRepository resumeRepository;
+    private final AnalysisRepository analysisRepository;
+    private final ResumeParserService resumeParserService;
     private final AIServiceClient aiServiceClient;
 
     public AnalysisService(
-            ResumeParserService resumeParserService,
-            SkillExtractor skillExtractor,
-            ATSCalculator atsCalculator,
-            AnalysisRepository analysisRepository,
             ResumeRepository resumeRepository,
+            AnalysisRepository analysisRepository,
+            ResumeParserService resumeParserService,
             AIServiceClient aiServiceClient
     ) {
-        this.resumeParserService = resumeParserService;
-        this.skillExtractor = skillExtractor;
-        this.atsCalculator = atsCalculator;
-        this.analysisRepository = analysisRepository;
         this.resumeRepository = resumeRepository;
+        this.analysisRepository = analysisRepository;
+        this.resumeParserService = resumeParserService;
         this.aiServiceClient = aiServiceClient;
     }
 
     public AnalysisResponse analyzeResume(
-            AnalysisRequest request
+            MultipartFile resumeFile,
+            String jobDescription
     ) throws IOException {
 
-        // 1. Find resume
-        Resume resumeEntity = resumeRepository.findById(request.getResumeId())
-                .orElseThrow(() -> new RuntimeException("Resume not found"));
+        // 1. Validate resume
+        if (resumeFile == null || resumeFile.isEmpty()) {
+            throw new IllegalArgumentException("Resume file is required");
+        }
 
-        // 2. Extract resume text
-        ResumeTextResponse resume =
-                resumeParserService.extractResumeText(request.getResumeId());
+        // 2. Validate job description
+        if (jobDescription == null || jobDescription.trim().isEmpty()) {
+            throw new IllegalArgumentException("Job description is required");
+        }
 
-        String resumeText = resume.getExtractedText();
+        // 3. Extract text from PDF
+        String resumeText = resumeParserService.extractText(resumeFile);
 
-        // 3. Send resume + JD to FastAPI → Gemini
-        AIAnalysisResponse aiResponse =
-                aiServiceClient.analyze(
+        if (resumeText == null || resumeText.trim().isEmpty()) {
+            throw new IllegalArgumentException(
+                    "Could not extract text from resume"
+            );
+        }
+
+        // 4. Send resume text + JD to FastAPI/Gemini
+        com.offerbound.backend.dto.AIAnalysisResponse aiResponse =
+                aiServiceClient.analyzeResume(
                         resumeText,
-                        request.getJobDescription()
+                        jobDescription
                 );
 
-        // 4. Create analysis record
-        Analysis analysis = new Analysis();
-
-        analysis.setResume(resumeEntity);
-        analysis.setJobDescription(request.getJobDescription());
-
-        analysis.setAtsScore(
-                aiResponse.getAts_score()
-        );
-
-        analysis.setMatchedSkills(
-                String.join(
-                        ", ",
-                        aiResponse.getMatched_skills()
-                )
-        );
-
-        analysis.setMissingSkills(
-                String.join(
-                        ", ",
-                        aiResponse.getMissing_skills()
-                )
-        );
-
-        // 5. Save analysis in MySQL
-        analysisRepository.save(analysis);
-
-        // 6. Return response to frontend/Postman
         return new AnalysisResponse(
                 aiResponse.getAts_score(),
                 aiResponse.getMatched_skills(),
@@ -103,28 +75,29 @@ public class AnalysisService {
             Long resumeId
     ) {
 
-        // Find resume
-        Resume resume = resumeRepository.findById(resumeId)
-                .orElseThrow(() -> new RuntimeException("Resume not found"));
-
-        // Get previous analyses
-        List<Analysis> analyses =
-                analysisRepository.findByResume(resume);
-
-        List<AnalysisHistoryResponse> response =
-                new ArrayList<>();
-
-        // Convert entities to response DTO
-        for (Analysis analysis : analyses) {
-
-            response.add(
-                    new AnalysisHistoryResponse(
-                            analysis.getId(),
-                            analysis.getAtsScore(),
-                            analysis.getCreatedAt()
-                    )
-            );
+        if (resumeId == null) {
+            throw new IllegalArgumentException("Resume ID is required");
         }
+
+        List<Analysis> analyses =
+                analysisRepository.findByResumeId(resumeId);
+
+        return analyses.stream()
+                .map(this::convertToHistoryResponse)
+                .collect(Collectors.toList());
+    }
+
+    private AnalysisHistoryResponse convertToHistoryResponse(
+            Analysis analysis
+    ) {
+
+        AnalysisHistoryResponse response =
+                new AnalysisHistoryResponse();
+
+        // Set fields according to your DTO
+        response.setId(analysis.getId());
+        response.setAtsScore(analysis.getAtsScore());
+        response.setCreatedAt(analysis.getCreatedAt());
 
         return response;
     }

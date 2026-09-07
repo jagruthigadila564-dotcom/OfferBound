@@ -1,21 +1,98 @@
 $kind: http-request
 name: http://localhost:8081/api/analysis/analyze
 description: ""
-url: http://localhost:8081/api/analysis/analyze
+url: 'http://localhost:8081/api/analysis/analyze'
 method: POST
 headers:
-  Content-Type: application/json
+  - key: Content-Type
+    value: application/json
 body:
-  type: json
-  content: "{\r
+  type: formdata
+  content:
+    - type: file
+      key: resume
+      src:
+        - /C:/Users/Gadila.pranathi/Desktop/jag/PROJECTS/RESUMES/jagruthi_resume_sony.pdf
+      description: ""
+      disabled: false
+    - type: text
+      key: jobDescription
+      value: |-
+        About the job
+        Sony Research India is driving cutting-edge research and development in various locations around the globe, including laboratories in Japan, the United States, Europe, and Asia. We endeavor to create new technology, products, and services while sustaining Sony Group’s diverse businesses in electronics, entertainment, and financial fields. For our research center to blaze a trail in the latest technologies, we seek to foster the growth of a diverse pool of research and engineering talent and create a technology talent bank to drive research excellence worldwide. Sony Research India is offering outstanding career opportunities around frontline technologies such as AI and data analytics.
 
-    \    \"resumeId\": 1,\r
 
-    \    \"jobDescription\": \"We are looking for a Java developer with Spring Boot, REST APIs, SQL, Git and problem-solving skills.\"\r
 
-    }"
+        We are looking for a highly motivated AI Research Intern to work on user behavior modeling for OTT platforms. The internship focuses on developing value-based models that capture how users perceive and derive value from the platform and leveraging causal inference techniques to identify effective interventions that improve user engagement, retention, and long-term satisfaction.
+
+        This is an opportunity to work on real-world, business-driven research problems at the intersection of machine learning, causal inference, and user modeling.
+
+
+
+        Work Location:
+
+        Remote work within India.
+
+
+        Duration of the paid internship:
+
+        The paid internship will be for six months starting third week of August 2026.
+        The working hours are from 9:00 IST to 18:00 IST (Monday to Friday).
+
+
+        Education:
+
+        Currently pursuing or recently completed a Bachelor's, Master's, or PhD in Computer Science, Artificial Intelligence, Machine Learning, Data Science, or a closely related field.
+
+
+        Responsibilities:
+
+        Develop predictive models using ML/DL/LLMs to understand and predict user behavior on OTT platforms.
+        Design and build value-based models to quantify the value users derive from different aspects of the platform and content.
+        Apply causal inference techniques to identify factors influencing user engagement and retention and recommend actionable interventions.
+        Develop and evaluate user intervention strategies using counterfactual and causal reasoning approaches.
+        Analyze large-scale user interaction datasets to derive insights and validate modeling hypotheses.
+        Implement and experiment with machine learning and causal inference algorithms using Python and PyTorch.
+        Collaborate with researchers to prototype, evaluate, and deploy novel approaches for user behavior modeling.
+
+
+        Must-Have Skills:
+
+        Strong foundation in machine learning, deep learning and LLMs with both theoretical understanding and practical implementation experience.
+        Knowledge of transformers, fine tuning of LLMs etc.
+        Knowledge of working with large-scale datasets and proficiency in SQL for data analysis.
+        Strong programming skills in Python.
+        Ability to read, understand, and implement ideas from recent ML/AI research papers.
+        Strong analytical thinking and problem-solving skills.
+
+
+        Good to Have Skills:
+
+        Familiarity with causal inference.
+        Experience with user behavior modeling, recommendation systems, or personalization.
+        Familiarity with representation learning, sequential modeling, or reinforcement learning.
+        Experience with LLMs, including fine-tuning or integrating them into downstream applications.
+        Experience working with AWS services such as S3, Athena, and EC2.
+        Ability to rapidly prototype ideas and validate them through experiments.
+
+
+        Our Values:
+
+        Dreams & Curiosity: Pioneer the future with dreams and curiosity.
+
+        Diversity: Pursue the creation of the very best by harnessing diversity and varying viewpoints.
+
+        Integrity & Sincerity: Earn the trust for Sony brand through ethical and responsible conduct.
+
+        Sustainability: Fulfil our stakeholder responsibilities through disciplined business practices.
+
+
+
+        Sony Research India is committed to equal opportunity in all its employment practices, policies and procedures and to ensuring that no worker or potential worker will receive less favourable treatment due to any characteristic protected under applicable local laws.
+      description: ""
+      disabled: false
 auth:
   type: bearer
   credentials:
-    token: eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJtb25rZXlAZ21haWwuY29tIiwiaWF0IjoxNzg2NDM5MDUxLCJleHAiOjE3ODY1MjU0NTF9.kE8UpMALLayqSk4vUT2SAfzr8qxrfkWsPeyVSTzd1gk
+    token: eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJtb25rZXlAZ21haWwuY29tIiwiaWF0IjoxNzg2NjM5MTMxLCJleHAiOjE3ODY3MjU1MzF9.WdjtC4jjVocGy0hDl6ACYKOe8kmZLeqxHDMXvJgMbgE
 order: 3024313313147669

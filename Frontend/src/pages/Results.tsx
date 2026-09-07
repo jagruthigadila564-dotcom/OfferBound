@@ -1,13 +1,21 @@
+// Results.tsx
 import { useEffect, useState } from 'react';
-import { Link, useLocation } from 'wouter';
+import { useLocation } from 'wouter';
 import { motion } from 'framer-motion';
-import { ArrowRight, Lightbulb } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { ScoreCard } from '@/components/ScoreCard';
-import { SkillsList } from '@/components/SkillsList';
-import { useRequireAuth } from '@/lib/auth';
+import {
+  ArrowLeft,
+  CheckCircle2,
+  XCircle,
+  Lightbulb,
+  TrendingUp,
+  Loader2,
+  FileText,
+} from 'lucide-react';
 
-interface AnalysisResult {
+import { Button } from '@/components/ui/button';
+import { api } from '@/lib/api';
+
+interface Analysis {
   ats_score: number;
   matched_skills: string[];
   missing_skills: string[];
@@ -17,144 +25,555 @@ interface AnalysisResult {
 }
 
 export default function Results() {
-  useRequireAuth();
+
   const [, setLocation] = useLocation();
-  const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
+
+  const [analysis, setAnalysis] =
+    useState<Analysis | null>(null);
+
+  const [isTailoring, setIsTailoring] =
+    useState(false);
 
   useEffect(() => {
-    const raw = sessionStorage.getItem('lastAnalysis');
-    if (!raw) {
-      // No analysis in this session — send them back to run one
+
+    const storedAnalysis =
+      sessionStorage.getItem('lastAnalysis');
+
+    if (!storedAnalysis) {
       setLocation('/dashboard');
       return;
     }
-    setAnalysis(JSON.parse(raw));
+
+    try {
+
+      setAnalysis(
+        JSON.parse(storedAnalysis)
+      );
+
+    } catch (error) {
+
+      console.error(
+        'Failed to parse analysis:',
+        error
+      );
+
+      setLocation('/dashboard');
+    }
+
   }, [setLocation]);
 
-  if (!analysis) return null;
+  const handleTailorResume = async () => {
+
+    const token =
+      localStorage.getItem('token');
+
+    const resumeId =
+      sessionStorage.getItem('lastResumeId');
+
+    const jobDescription =
+      sessionStorage.getItem(
+        'lastJobDescription'
+      );
+
+    if (!token) {
+
+      alert(
+        'Your login session has expired. Please login again.'
+      );
+
+      setLocation('/login');
+      return;
+    }
+
+    if (!resumeId) {
+
+      alert(
+        'Resume ID is missing. Please analyze your resume again.'
+      );
+
+      setLocation('/dashboard');
+      return;
+    }
+
+    if (!jobDescription) {
+
+      alert(
+        'Job description is missing. Please analyze your resume again.'
+      );
+
+      setLocation('/dashboard');
+      return;
+    }
+
+    setIsTailoring(true);
+
+    try {
+
+      console.log(
+        'Tailoring resume...',
+        {
+          resumeId,
+          jobDescriptionLength:
+            jobDescription.length
+        }
+      );
+
+      const tailoredResume =
+        await api.tailorResume(
+          Number(resumeId),
+          jobDescription
+        );
+
+      console.log(
+        'Tailored resume received:',
+        tailoredResume
+      );
+
+      sessionStorage.setItem(
+        'tailoredResume',
+        JSON.stringify(tailoredResume)
+      );
+
+      setLocation(
+        '/tailored-resume'
+      );
+
+    } catch (error) {
+
+      console.error(
+        'Tailoring failed:',
+        error
+      );
+
+      let message =
+        'Failed to tailor your resume. Please try again.';
+
+      if (error instanceof Error) {
+        message = error.message;
+      }
+
+      alert(message);
+
+    } finally {
+
+      setIsTailoring(false);
+    }
+  };
+
+  if (!analysis) {
+
+    return (
+      <div className="min-h-[100dvh] flex items-center justify-center">
+
+        <Loader2
+          className="h-8 w-8 animate-spin"
+        />
+
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-[100dvh] bg-gradient-to-br from-background via-primary/5 to-accent/5">
-      {/* Background decorative elements */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(139,92,246,0.1),transparent_50%)] pointer-events-none" />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_60%,rgba(6,182,212,0.1),transparent_50%)] pointer-events-none" />
 
-      <div className="relative max-w-6xl mx-auto px-6 py-12">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="text-center mb-12"
+      <div className="max-w-6xl mx-auto px-6 py-10">
+
+        <Button
+          variant="ghost"
+          onClick={() =>
+            setLocation('/dashboard')
+          }
+          className="mb-8"
         >
-          <h1 className="text-4xl lg:text-5xl font-bold mb-3">
-            Analysis <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Complete</span>
+
+          <ArrowLeft className="mr-2 h-4 w-4" />
+
+          Back to Dashboard
+
+        </Button>
+
+        <motion.div
+          initial={{
+            opacity: 0,
+            y: 20
+          }}
+          animate={{
+            opacity: 1,
+            y: 0
+          }}
+          className="mb-10"
+        >
+
+          <h1 className="text-4xl font-bold mb-3">
+            Resume Analysis
           </h1>
-          <p className="text-lg text-muted-foreground">
-            Here's how your resume matches the job description
+
+          <p className="text-muted-foreground text-lg">
+            Here's how well your resume matches the job description.
           </p>
+
         </motion.div>
 
-        {/* ATS Score - Hero */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          className="mb-12 flex justify-center"
+          initial={{
+            opacity: 0,
+            y: 20
+          }}
+          animate={{
+            opacity: 1,
+            y: 0
+          }}
+          transition={{
+            delay: 0.1
+          }}
+          className="bg-card border border-border/50 rounded-3xl p-8 mb-8 shadow-xl"
         >
-          <div className="relative p-12 rounded-3xl bg-card border border-border/50 shadow-2xl">
-            <ScoreCard score={analysis.ats_score} label="ATS Score" />
-            <div className="absolute -inset-1 bg-gradient-to-br from-primary/20 to-accent/20 rounded-3xl blur-2xl -z-10" />
+
+          <div className="text-center">
+
+            <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+              ATS Compatibility Score
+            </p>
+
+            <div className="text-7xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+              {analysis.ats_score}
+            </div>
+
+            <p className="text-muted-foreground mt-2">
+              out of 100
+            </p>
+
           </div>
+
         </motion.div>
 
-        {/* Grid of Cards */}
-        <div className="grid md:grid-cols-2 gap-6 mb-12">
-          {/* Strengths */}
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5, delay: 0.3 }}
-            className="p-8 rounded-2xl bg-card border border-border/50 shadow-lg"
-          >
-            <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-chart-3" />
-              Strengths
-            </h3>
-            <SkillsList skills={analysis.strengths} variant="positive" />
-          </motion.div>
+        <div className="grid md:grid-cols-2 gap-6 mb-8">
 
-          {/* Matched Skills */}
           <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5, delay: 0.4 }}
-            className="p-8 rounded-2xl bg-card border border-border/50 shadow-lg"
+            initial={{
+              opacity: 0,
+              y: 20
+            }}
+            animate={{
+              opacity: 1,
+              y: 0
+            }}
+            transition={{
+              delay: 0.2
+            }}
+            className="bg-card border border-border/50 rounded-3xl p-6 shadow-xl"
           >
-            <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-accent" />
-              Matched Skills
-            </h3>
-            <SkillsList skills={analysis.matched_skills} variant="positive" />
-          </motion.div>
 
-          {/* Missing Skills */}
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5, delay: 0.5 }}
-            className="p-8 rounded-2xl bg-card border border-border/50 shadow-lg"
-          >
-            <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-destructive" />
-              Missing Skills
-            </h3>
-            <SkillsList skills={analysis.missing_skills} variant="negative" />
-          </motion.div>
+            <div className="flex items-center gap-3 mb-5">
 
-          {/* AI Suggestions */}
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5, delay: 0.6 }}
-            className="p-8 rounded-2xl bg-gradient-to-br from-primary/10 to-accent/10 border border-primary/20 shadow-lg"
-          >
-            <div className="flex items-center gap-2 mb-6">
-              <Lightbulb className="h-5 w-5 text-accent" />
-              <h3 className="text-xl font-bold">AI Suggestions</h3>
+              <CheckCircle2 className="h-6 w-6 text-green-500" />
+
+              <h2 className="text-xl font-bold">
+                Matched Skills
+              </h2>
+
             </div>
-            <div className="space-y-4 text-sm leading-relaxed">
-              {analysis.suggestions.map((suggestion, index) => (
-                <p key={index} className="flex items-start gap-2">
-                  <span className="text-accent mt-1">•</span>
-                  <span>{suggestion}</span>
+
+            <div className="flex flex-wrap gap-2">
+
+              {analysis.matched_skills.length > 0 ? (
+
+                analysis.matched_skills.map(
+                  (skill, index) => (
+
+                    <span
+                      key={index}
+                      className="px-3 py-2 rounded-lg bg-green-500/10 text-green-600 text-sm font-medium"
+                    >
+                      {skill}
+                    </span>
+
+                  )
+                )
+
+              ) : (
+
+                <p className="text-muted-foreground">
+                  No matched skills found.
                 </p>
-              ))}
+
+              )}
+
             </div>
+
           </motion.div>
+
+          <motion.div
+            initial={{
+              opacity: 0,
+              y: 20
+            }}
+            animate={{
+              opacity: 1,
+              y: 0
+            }}
+            transition={{
+              delay: 0.3
+            }}
+            className="bg-card border border-border/50 rounded-3xl p-6 shadow-xl"
+          >
+
+            <div className="flex items-center gap-3 mb-5">
+
+              <XCircle className="h-6 w-6 text-red-500" />
+
+              <h2 className="text-xl font-bold">
+                Missing Skills
+              </h2>
+
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+
+              {analysis.missing_skills.length > 0 ? (
+
+                analysis.missing_skills.map(
+                  (skill, index) => (
+
+                    <span
+                      key={index}
+                      className="px-3 py-2 rounded-lg bg-red-500/10 text-red-600 text-sm font-medium"
+                    >
+                      {skill}
+                    </span>
+
+                  )
+                )
+
+              ) : (
+
+                <p className="text-muted-foreground">
+                  No major missing skills found.
+                </p>
+
+              )}
+
+            </div>
+
+          </motion.div>
+
         </div>
 
-        {/* CTA */}
+        <div className="grid md:grid-cols-2 gap-6 mb-8">
+
+          <motion.div
+            initial={{
+              opacity: 0,
+              y: 20
+            }}
+            animate={{
+              opacity: 1,
+              y: 0
+            }}
+            transition={{
+              delay: 0.4
+            }}
+            className="bg-card border border-border/50 rounded-3xl p-6 shadow-xl"
+          >
+
+            <div className="flex items-center gap-3 mb-5">
+
+              <TrendingUp className="h-6 w-6 text-green-500" />
+
+              <h2 className="text-xl font-bold">
+                Strengths
+              </h2>
+
+            </div>
+
+            <ul className="space-y-3">
+
+              {analysis.strengths.map(
+                (strength, index) => (
+
+                  <li
+                    key={index}
+                    className="flex gap-3 text-sm"
+                  >
+
+                    <CheckCircle2 className="h-5 w-5 text-green-500 shrink-0 mt-0.5" />
+
+                    <span>
+                      {strength}
+                    </span>
+
+                  </li>
+
+                )
+              )}
+
+            </ul>
+
+          </motion.div>
+
+          <motion.div
+            initial={{
+              opacity: 0,
+              y: 20
+            }}
+            animate={{
+              opacity: 1,
+              y: 0
+            }}
+            transition={{
+              delay: 0.5
+            }}
+            className="bg-card border border-border/50 rounded-3xl p-6 shadow-xl"
+          >
+
+            <div className="flex items-center gap-3 mb-5">
+
+              <XCircle className="h-6 w-6 text-orange-500" />
+
+              <h2 className="text-xl font-bold">
+                Weaknesses
+              </h2>
+
+            </div>
+
+            <ul className="space-y-3">
+
+              {analysis.weaknesses.map(
+                (weakness, index) => (
+
+                  <li
+                    key={index}
+                    className="flex gap-3 text-sm"
+                  >
+
+                    <XCircle className="h-5 w-5 text-orange-500 shrink-0 mt-0.5" />
+
+                    <span>
+                      {weakness}
+                    </span>
+
+                  </li>
+
+                )
+              )}
+
+            </ul>
+
+          </motion.div>
+
+        </div>
+
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.7 }}
+          initial={{
+            opacity: 0,
+            y: 20
+          }}
+          animate={{
+            opacity: 1,
+            y: 0
+          }}
+          transition={{
+            delay: 0.6
+          }}
+          className="bg-card border border-border/50 rounded-3xl p-6 shadow-xl mb-10"
+        >
+
+          <div className="flex items-center gap-3 mb-5">
+
+            <Lightbulb className="h-6 w-6 text-yellow-500" />
+
+            <h2 className="text-xl font-bold">
+              Resume Improvement Suggestions
+            </h2>
+
+          </div>
+
+          <ul className="space-y-4">
+
+            {analysis.suggestions.map(
+              (suggestion, index) => (
+
+                <li
+                  key={index}
+                  className="flex gap-3"
+                >
+
+                  <span className="flex items-center justify-center w-7 h-7 rounded-full bg-primary/10 text-primary text-sm font-bold shrink-0">
+                    {index + 1}
+                  </span>
+
+                  <span className="text-sm leading-relaxed pt-1">
+                    {suggestion}
+                  </span>
+
+                </li>
+
+              )
+            )}
+
+          </ul>
+
+        </motion.div>
+
+        <motion.div
+          initial={{
+            opacity: 0,
+            y: 20
+          }}
+          animate={{
+            opacity: 1,
+            y: 0
+          }}
+          transition={{
+            delay: 0.7
+          }}
           className="text-center"
         >
-          <div className="relative inline-block">
-            <Link href="/interview" data-testid="link-start-interview">
-              <Button size="lg" className="glow-accent group h-14 px-8 text-lg">
-                Start Personalized Mock Interview
-                <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
-              </Button>
-            </Link>
-            <div className="absolute -inset-2 bg-gradient-to-r from-primary/30 to-accent/30 rounded-xl blur-xl -z-10" />
-          </div>
-          <p className="text-sm text-muted-foreground mt-4">
-            Practice your interview skills with AI-powered questions
+
+          <Button
+            size="lg"
+            variant="outline"
+            onClick={handleTailorResume}
+            disabled={isTailoring}
+            className="h-14 px-8 text-lg"
+          >
+
+            {isTailoring ? (
+
+              <>
+
+                <Loader2
+                  className="mr-2 h-5 w-5 animate-spin"
+                />
+
+                Tailoring Resume...
+
+              </>
+
+            ) : (
+
+              <>
+
+                <FileText
+                  className="mr-2 h-5 w-5"
+                />
+
+                Tailor My Resume for This Job
+
+              </>
+
+            )}
+
+          </Button>
+
+          <p className="text-sm text-muted-foreground mt-3">
+            AI will optimize your resume using only information already present in it.
           </p>
+
         </motion.div>
+
       </div>
+
     </div>
   );
 }

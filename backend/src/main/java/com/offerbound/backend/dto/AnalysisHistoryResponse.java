@@ -25,11 +25,23 @@ public class AnalysisHistoryResponse {
         return id;
     }
 
+    public void setId(Long id) {
+        this.id = id;
+    }
+
     public int getAtsScore() {
         return atsScore;
     }
 
+    public void setAtsScore(int atsScore) {
+        this.atsScore = atsScore;
+    }
+
     public LocalDateTime getCreatedAt() {
         return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
     }
 }

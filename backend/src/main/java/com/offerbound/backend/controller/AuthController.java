@@ -17,28 +17,57 @@ public class AuthController {
     private final UserService userService;
     private final JwtService jwtService;
 
-    public AuthController(UserService userService, JwtService jwtService) {
+    public AuthController(
+            UserService userService,
+            JwtService jwtService
+    ) {
         this.userService = userService;
         this.jwtService = jwtService;
     }
 
     @PostMapping("/register")
-    public String register(@RequestBody RegisterRequest request) {
+    public String register(
+            @RequestBody RegisterRequest request
+    ) {
+
         return userService.registerUser(request);
     }
 
     @PostMapping("/login")
-    public AuthResponse login(@RequestBody LoginRequest request) {
+    public AuthResponse login(
+            @RequestBody LoginRequest request
+    ) {
 
-        User user = userService.authenticateAndGetUser(request);
-        String token = jwtService.generateToken(user.getEmail());
+        User user =
+                userService.authenticateAndGetUser(
+                        request
+                );
 
-        return new AuthResponse(token, "Login Successful", user.getId());
+        String token =
+                jwtService.generateToken(
+                        user.getEmail()
+                );
+
+        return new AuthResponse(
+                token,
+                "Login Successful",
+                user.getId()
+        );
     }
 
-    // Turns "User not found" / "Invalid password" into a real 401 instead of a 500
     @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<AuthResponse> handleAuthError(RuntimeException ex) {
-        return ResponseEntity.status(401).body(new AuthResponse(null, ex.getMessage(), null));
+    public ResponseEntity<AuthResponse> handleAuthError(
+            RuntimeException ex
+    ) {
+
+        return ResponseEntity
+                .status(401)
+                .body(
+                        new AuthResponse(
+                                null,
+                                ex.getMessage(),
+                                null
+                        )
+                );
     }
 }

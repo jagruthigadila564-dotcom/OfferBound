@@ -1,0 +1,15 @@
+$kind: http-request
+name: http://127.0.0.1:8000/analyze
+description: ""
+url: http://127.0.0.1:8000/analyze
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \  \"resume_text\": \"John Doe is a Computer Science student skilled in Python, Java, React, Spring Boot, MySQL, Machine Learning and FastAPI. He has developed AI and full-stack projects.\",\r
+
+    \  \"job_description\": \"We are looking for a Software Engineer Intern with knowledge of Java, Python, React, Spring Boot, SQL and Machine Learning. Experience building full-stack applications is preferred.\"\r
+
+    }"
+order: 4479747921444420

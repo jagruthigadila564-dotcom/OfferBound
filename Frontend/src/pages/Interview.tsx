@@ -15,6 +15,7 @@ const questions = [
 ];
 
 export default function Interview() {
+  useRequireAuth();
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answer, setAnswer] = useState('');
   const [feedback, setFeedback] = useState<{

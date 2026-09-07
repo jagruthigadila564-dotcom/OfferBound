@@ -7,11 +7,11 @@ body:
   type: json
   content: "{\r
 
-    \  \"name\": \"monkey\",\r
+    \    \"name\": \"Pranathii\",\r
 
-    \  \"email\": \"monkey@gmail.com\",\r
+    \    \"email\": \"pranathii@gmail.com\",\r
 
-    \  \"password\": \"123456\"\r
+    \    \"password\": \"YourPassword123\"\r
 
     }"
 order: 1786443897693

@@ -33,4 +33,3 @@ public class AIAnalysisController {
         return ResponseEntity.ok(response);
     }
 }
-

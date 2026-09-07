@@ -4,7 +4,10 @@ import com.offerbound.backend.dto.ResumeTextResponse;
 import com.offerbound.backend.entity.Resume;
 import com.offerbound.backend.parser.PdfParser;
 import com.offerbound.backend.repository.ResumeRepository;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.text.PDFTextStripper;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 
@@ -34,5 +37,15 @@ public class ResumeParserService {
                 resume.getId(),
                 extractedText
         );
+    }
+
+    public String extractText(MultipartFile resumeFile) throws IOException {
+        if (resumeFile == null || resumeFile.isEmpty()) {
+            throw new IllegalArgumentException("Resume file is required");
+        }
+
+        try (PDDocument document = PDDocument.load(resumeFile.getInputStream())) {
+            return new PDFTextStripper().getText(document);
+        }
     }
 }

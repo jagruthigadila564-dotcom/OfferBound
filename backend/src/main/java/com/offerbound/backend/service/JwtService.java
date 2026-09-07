@@ -23,43 +23,116 @@ public class JwtService {
     @Value("${jwt.expiration}")
     private long jwtExpiration;
 
+    // Generate token
     public String generateToken(String email) {
-        return generateToken(new HashMap<>(), email);
+
+        return generateToken(
+                new HashMap<>(),
+                email
+        );
     }
 
-    public String generateToken(Map<String, Object> extraClaims, String email) {
+    // Generate token with extra claims
+    public String generateToken(
+            Map<String, Object> extraClaims,
+            String email
+    ) {
+
         return Jwts.builder()
                 .setClaims(extraClaims)
                 .setSubject(email)
-                .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + jwtExpiration))
-                .signWith(getSigningKey(), SignatureAlgorithm.HS256)
+                .setIssuedAt(
+                        new Date(
+                                System.currentTimeMillis()
+                        )
+                )
+                .setExpiration(
+                        new Date(
+                                System.currentTimeMillis()
+                                        + jwtExpiration
+                        )
+                )
+                .signWith(
+                        getSigningKey(),
+                        SignatureAlgorithm.HS256
+                )
                 .compact();
     }
 
-    public String extractUsername(String token) {
-        return extractClaim(token, Claims::getSubject);
+    // Extract email
+    public String extractUsername(
+            String token
+    ) {
+
+        return extractClaim(
+                token,
+                Claims::getSubject
+        );
     }
 
-    public Date extractExpiration(String token) {
-        return extractClaim(token, Claims::getExpiration);
+    // Extract expiration
+    public Date extractExpiration(
+            String token
+    ) {
+
+        return extractClaim(
+                token,
+                Claims::getExpiration
+        );
     }
 
-    public <T> T extractClaim(String token, Function<Claims, T> resolver) {
-        final Claims claims = extractAllClaims(token);
+    // Extract claim
+    public <T> T extractClaim(
+            String token,
+            Function<Claims, T> resolver
+    ) {
+
+        Claims claims =
+                extractAllClaims(token);
+
         return resolver.apply(claims);
     }
 
-    public boolean isTokenValid(String token, String email) {
-        final String username = extractUsername(token);
-        return username.equals(email) && !isTokenExpired(token);
+    // Validate token
+    public boolean isTokenValid(
+            String token,
+            String email
+    ) {
+
+        try {
+
+            String username =
+                    extractUsername(token);
+
+            return username != null
+                    && username.equals(email)
+                    && !isTokenExpired(token);
+
+        } catch (Exception e) {
+
+            System.out.println(
+                    "JWT validation failed: "
+                            + e.getMessage()
+            );
+
+            return false;
+        }
     }
 
-    private boolean isTokenExpired(String token) {
-        return extractExpiration(token).before(new Date());
+    // Check expiration
+    private boolean isTokenExpired(
+            String token
+    ) {
+
+        return extractExpiration(token)
+                .before(new Date());
     }
 
-    private Claims extractAllClaims(String token) {
+    // Extract claims
+    private Claims extractAllClaims(
+            String token
+    ) {
+
         return Jwts.parserBuilder()
                 .setSigningKey(getSigningKey())
                 .build()
@@ -67,7 +140,14 @@ public class JwtService {
                 .getBody();
     }
 
+    // Generate signing key
     private Key getSigningKey() {
-        return Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
+
+        byte[] keyBytes =
+                secretKey.getBytes(
+                        StandardCharsets.UTF_8
+                );
+
+        return Keys.hmacShaKeyFor(keyBytes);
     }
 }

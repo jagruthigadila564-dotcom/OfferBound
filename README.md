@@ -11,6 +11,7 @@ Users can upload their resume and provide a job description. OfferBound analyzes
 - Matched skills
 - Missing skills
 - Resume improvement suggestions
+- Tailored resume PDF export
 - Personalized mock interview questions
 
 The goal of OfferBound is to help students and job seekers understand their strengths, identify skill gaps, and prepare effectively for real-world job opportunities.
